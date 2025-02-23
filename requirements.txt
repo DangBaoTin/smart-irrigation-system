@@ -1,0 +1,27 @@
+git+https://github.com/aquacropos/aquacrop
+gym
+tensorflow
+keras==2.13.1
+
+matplotlib==3.8
+numpy==1.22.4
+contourpy==1.2
+seaborn
+scipy==1.10
+
+scikit-learn
+kafka-python
+
+# aquacrop
+# aquacropeto==0.1.1
+# ray
+# tqdm
+
+
+# aquacrop==1.1.2
+# aquacropeto==0.1.1
+# gym==0.19.0
+# tensorflow==2.8.0
+
+# numpy==1.21.2
+# aquacropgym
