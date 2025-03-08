@@ -7,11 +7,13 @@ import numpy as np
 import pandas as pd
 
 class TrainingEnvironment:
-    def __init__(self, dataset, state_attributes):
+    def __init__(self, dataset, state_attributes, optimal_moisture, timestep):
         self.df = dataset
         self.state_attributes = state_attributes
+        self.optimal_moisture = optimal_moisture
+        self.timestep = timestep
+
         self.state_data = self.df[state_attributes].values
-        
         self.current_index = 0              # track position in dataset
         self.EoS = len(self.df) - 1         # length of dataset (End of Season - EoS)
 
@@ -21,7 +23,7 @@ class TrainingEnvironment:
         self.current_state = np.append(self.state_data[0], call_rain())
     
     def fit(self):
-        X_COLUMNS = ['temperature','soil_type', 'rain', 'initial_soil_moisture', 'watering_amount', 'duration']
+        X_COLUMNS = ['temperature','humidity', 'pH', 'current_soil_moisture', 'irrigation_amount', 'duration']
         Y_COLUMNS = ['soil_moisture_after']
 
         X = self.df[X_COLUMNS]
@@ -34,11 +36,12 @@ class TrainingEnvironment:
         self.current_index = 0
         return np.append(self.state_data[0], call_rain())
     
-    def step(self, current_idx, action):
+    def step(self, action):
         """Move to the next state based on dataset order."""
-        self.current_index = current_idx
-        next_state = self.data[current_idx + 1]
-        reward = computre_reward(self.data['soil_moisture'][current_idx], self.data['soil_moisture'][current_idx] + action, 1)
+        irrigation_amount = self.irrigation_map[action]
+        next_state_moisture = self.model.predict(self.current_state)
+        next_state = np.append(self.state_data[self.current_index + 1], [irrigation_amount, next_state_moisture])
+        reward = compute_reward(self.state_data['current_soil_moisture'][self.current_index], next_state_moisture, 1)
 
         if self.current_index >= self.n_timesteps:
             return None, 0, True  # End of dataset
@@ -47,11 +50,12 @@ class TrainingEnvironment:
         # next_sample = self.data[self.current_index + 1]
         # next_state = self.extract_state(next_sample)
         # reward = self.get_reward(sample, action)
+        self.current_state = next_state
         self.current_index += 1
-        done = self.current_index >= self.n_timesteps
+        done = self.current_index >= self.EoS
         
         return next_state, reward, done
     
     def get_total_timesteps(self):
         """Return the total number of timesteps."""
-        return self.n_timesteps
+        return self.EoS

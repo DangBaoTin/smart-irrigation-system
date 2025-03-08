@@ -34,11 +34,11 @@ class deepQ_agent:
         model = Sequential()
 
         # Input layer
-        # model.add(Dense(32, activation='relu', input_dim=self.state_size))
-        model.add(Dense(16, activation='relu', input_dim=self.state_size))
+        model.add(Dense(32, activation='relu', input_dim=self.state_size))
+        # model.add(Dense(16, activation='relu', input_dim=self.state_size))
         # Hidden layer
-        # model.add(Dense(32, activation='relu'))
-        model.add(Dense(12, activation='relu'))
+        model.add(Dense(32, activation='relu'))
+        # model.add(Dense(12, activation='relu'))
         # Output layer
         model.add(Dense(self.action_size, activation='linear'))
         

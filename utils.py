@@ -32,7 +32,7 @@ def get_reward(soil_moisture, irrigation, optimal_min=30.0, optimal_max=40.0):
     
     return reward
 
-def computre_reward(M_t, M_t_next, t, M_opt=35.0, decay_rate=0.05):
+def compute_reward(M_t, M_t_next, t, M_opt=35.0, decay_rate=0.05):
     """
     Compute the reward based on the integral of deviation from the target moisture.
 
