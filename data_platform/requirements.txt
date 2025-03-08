@@ -1,0 +1,11 @@
+csv
+json
+logging
+requests
+openmeteo_requests
+requests_cache
+pandas
+retry_requests
+kafka-python
+sqlalchemy
+python-dotenv

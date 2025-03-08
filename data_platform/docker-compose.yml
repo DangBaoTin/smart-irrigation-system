@@ -1,0 +1,145 @@
+
+networks:
+  demo_net:
+    driver: bridge
+
+services:
+  # ====================================================================================================
+  #   ZOOKEEPER ==========================================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    ports:
+     - "2181:2181"
+    # networks:
+    #   - demo_net
+    healthcheck:
+      test: nc -z zookeeper 2181 || exit -1
+      start_period: 15s
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+  
+
+
+
+  # ====================================================================================================
+  # KAFKA ==============================================================================================
+  broker_1:
+    image: confluentinc/cp-kafka:latest
+    container_name: broker_1
+    ports:
+      - 9092:9092
+    mem_limit: 1610612736
+    # networks:
+    #   - demo_net
+    healthcheck:
+      test: nc -z broker_1 9092 || exit -1
+      start_period: 15s
+      interval: 5s
+      timeout: 10s
+      retries: 10     
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    # volumes:
+      # - ./config/kafka_init/run_workaround.sh:/tmp/run_workaround.sh
+      # - ./kafka/data/broker_1:/var/lib/kafka/data
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT_HOST://broker_1:9092,PLAINTEXT://broker_1:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_HOST://localhost:9092,PLAINTEXT://broker_1:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_JMX_PORT: 9090
+      KAFKA_LOG_DIRS: /var/log/kafka
+      KAFKA_NUM_PARTITIONS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+      CONFLUENT_METRICS_ENABLE: 'false'
+    
+  broker_2:
+    image: confluentinc/cp-kafka:latest
+    container_name: broker_2
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - 9094:9094
+    # volumes:
+      # - ./config/kafka_init/run_workaround.sh:/tmp/run_workaround.sh
+      # - ./kafka/data/broker_2:/var/lib/kafka/data
+    mem_limit: 1610612736
+    # networks:
+    #   - demo_net
+    healthcheck:
+      test: nc -z broker_2 9094 || exit -1
+      start_period: 15s
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT_HOST://broker_2:9094,PLAINTEXT://broker_2:9095
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT_HOST://localhost:9094,PLAINTEXT://broker_2:9095
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_JMX_PORT: 9090
+      KAFKA_LOG_DIRS: /var/log/kafka
+      KAFKA_NUM_PARTITIONS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 100
+      CONFLUENT_METRICS_ENABLE: 'false'
+
+  kafka-ui:
+    container_name: kafka_ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8080:8080
+    depends_on:
+      broker_1:
+        condition: service_healthy
+      broker_2:
+        condition: service_healthy
+    # networks:
+    #   - n_net
+    healthcheck:
+      test: nc -z kafka_ui 8080 || exit -1
+      start_period: 15s
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    environment:
+      KAFKA_CLUSTERS_0_NAME: smart_irrigation_cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: broker_1:9093, broker_2:9095
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9090
+  
+  # ====================================================================================================
+  # DATABASE ===========================================================================================
+  postgres:
+    image: postgres:latest
+    container_name: postgres_db
+    hostname: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin1234
+      POSTGRES_DB: sis # smart_irrigation_system
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data
+      - ./postgres/dump/langfuse_dump:/var/lib/postgresql/dump/langfuse_dump
