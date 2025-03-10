@@ -26,8 +26,13 @@ rm -rf venv
 env = VirtualGarrden(...)
 
 While on:
+
 data -> env
+
 env ->  + database (do không gọi env.step() nên action sẽ là Null)
+        
         + lưu buffer để xử lý
+
 agent (đã load) gọi hàm env.step(lấy bao nhiêu trước đó, gọi từ cái db) -> action -> lưu database -> tính score
+
 next step
