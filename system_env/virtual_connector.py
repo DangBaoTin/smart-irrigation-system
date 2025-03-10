@@ -94,7 +94,7 @@ class VirtualGardenEnv:
             return score
 
 
-    def predict_next_state(self):
+    def predict_next_state(self, flag):
         """Simple trend-based prediction using last known values."""
         pass
 
