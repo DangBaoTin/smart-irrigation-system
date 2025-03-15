@@ -8,7 +8,7 @@ from tensorflow.keras.optimizers import Adam
 
 # Build an agent class for APSIM irrigation
 class deepQ_agent:
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size, saved_model = None, init_epsilon = 1.0):
         self.state_size = state_size
         self.action_size = action_size
 
@@ -17,17 +17,21 @@ class deepQ_agent:
 
         # Init parameters for agent
         self.gamma = 0.99                   # Discount factor
-        self.epsilon = 1.0                  # Initial exploration rate
+        self.epsilon = init_epsilon         # Initial exploration rate
         self.epsilon_min = 0.01             # Minimum epsilon
         self.epsilon_decay = 0.995          # Decay for epsilon
         self.learning_rate = 0.001          # Learning rate for ADAM
         self.update_targetNN_rate = 10      # Update target network after certain episodes
 
-        self.main_network = self.build_network()
+        if saved_model is not None:
+            self.main_network = saved_model
+        else:
+            self.main_network = self.build_network()
+        
         self.target_network = self.build_network()
 
         # Update target network weight = main network weight
-        self.update_target_network
+        self.update_target_network()
 
     def build_network(self):
         # Neural Net for Deep Q Learning model
