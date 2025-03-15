@@ -1,11 +1,16 @@
 from kafka import KafkaConsumer
-import json
 from datetime import datetime
 import keras
 from utils import *
 import numpy as np
+import json
+from utils.db_utils import DatabaseInteractor
 
-class VirtualGardenEnv:
+ENV_STATE = {
+    'col': ['id', 'place_id', 'temperature', 'humidity', 'rain', 'evapo', 'wind', 's_moist', 'created_at', 'updated_at'],
+}
+
+class VirtuaEnv:
     def __init__(self, kafka_topic, kafka_servers, end_of_season, trained_model, steps):
         self.consumer = KafkaConsumer(
             kafka_topic, 
@@ -31,19 +36,20 @@ class VirtualGardenEnv:
         self.steps = steps
         self.score_buffer = []
         self.M_opt = 35.0
+        self.db_utils = DatabaseInteractor(POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD)
     
     def pause_kafka(self):
         """Pause Kafka consumer to stop receiving new messages."""
         self.consumer.pause()
         self.paused = True
-        print("Kafka consumption paused.")
+        print("[INFO] Kafka consumption paused.")
 
     def resume_kafka(self, new_trained_model):
         """Resume Kafka consumer to start receiving messages again."""
         self.consumer.resume()
         self.paused = False
         self.model = keras.models.load_model(new_trained_model)
-        print("Kafka consumption resumed.")
+        print("[INFO] Kafka consumption resumed.")
 
     def get_latest_state(self):
         """Retrieve the latest values from different sensors and return a complete state."""
@@ -94,14 +100,39 @@ class VirtualGardenEnv:
             return score
 
 
+
+
+
+
     def predict_next_state(self):
         """Simple trend-based prediction using last known values."""
         pass
 
     def store_to_db(self, state, current_time):
-        """Store the latest sensor state in SQL db."""
-        pass
-
+        """Store the latest sensor state in SQL db"""
+        # Transform state to dataframe
+        state_df = pd.DataFrame(state, index=[0])
+        state_df['created_at'] = current_time
+        state_df['updated_at'] = current_time
+        state_df = state_df[ENV_STATE['col']]
+        
+        self.db_utils.write_dataframe(
+            df
+            , table_name='env_state'
+            , schema='public'
+            , method:str='insert'
+        ):
+    
+    def store_into_buffer(self, state, buffer):
+        if len(buffer) < 1000:
+            buffer.append(state)
+        else:
+            buffer.pop(0)
+            buffer.append(state)
+    
+        
+    
+            
     def run(self):
         """Continuously fetch state, either from Kafka or via prediction."""
         while True:
@@ -111,3 +142,5 @@ class VirtualGardenEnv:
             else:
                 print("No data available, stopping predictions.")
                 break
+
+
