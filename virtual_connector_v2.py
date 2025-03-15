@@ -30,6 +30,7 @@ class VirtuaEnv:
         self.score_buffer = []
         self.M_opt = 35.0
         self.db_utils = DatabaseInteractor(POSTGRES_HOST, POSTGRES_PORT, POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD)
+        self.api_utisl = MeteoAPI()
     
     def get_n_state_before(self, n, duration, mark_time=None):
         # duration: {days, hours, minutes, seconds}
@@ -69,18 +70,24 @@ class VirtuaEnv:
         # if no data available, return None
         # if data available, return the state
         state = self.db_utils.read_latest_record('env_state')
-        if not state:
-            return None
-        else:
-            # check the state and the time of the state
-            current_time = datetime.now()
+        retries = 0
+        isSuccess = False
+        
+        while retries < 5 and not isSuccess:
+            state = self.predict_next_state()
+            if state:
+                current_time = datetime.now()
             
-            state_id = datetime.strptime(state['id'], "%Y%m%d%H%M%S")
-            if current_time - state_id > 5*60: # 5 minutes
-                return state
+                state_time = datetime.strptime(state['id'], "%Y%m%d%H%M%S")
+                if current_time - state_time > 5*60:
+                    isSuccess = True
+                    
             else:
-                return predict_next_state()
-            
+                retries += 1
+       
+       if not isSuccess:
+            return predict_next_state()
+                
     def score(self, state, action=None):
         state = self.get_latest_state()
         if not action:
@@ -93,11 +100,6 @@ class VirtuaEnv:
                 score += abs(s['soil_moisture'] - self.M_opt)
             self.score_buffer = [state]
             return score
-
-
-
-
-
 
     def predict_next_state(self):
         """Simple trend-based prediction using last known values."""
@@ -124,9 +126,6 @@ class VirtuaEnv:
         else:
             buffer.pop(0)
             buffer.append(state)
-    
-        
-    
             
     def run(self):
         """Continuously fetch state, either from Kafka or via prediction."""
