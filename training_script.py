@@ -1,6 +1,10 @@
 from system_env.training_environment import TrainingEnvironment
 from deepQ_agent import deepQ_agent
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
 class TrainingSimulator:
     def __init__(self, dataset, state_attributes, state_size, action_size, n_episodes, n_timesteps, batch_size, optimal_moisture, n_step, irrigation_map):
         self.dataset = dataset
@@ -21,6 +25,8 @@ class TrainingSimulator:
         self.total_time = 0
 
     def reset(self, dataset, retrain = False, saved_model = None):
+        self.metrics = []
+        self.total_time = 0
         if retrain:
             self.my_agent = deepQ_agent(self.state_size, self.action_size, saved_model, 0.5)
             self.dataset = dataset
@@ -85,6 +91,28 @@ class TrainingSimulator:
                 'total_reward': ep_rewards,
                 'average_loss': np.mean(ep_losses) if ep_losses else 0,
             })
+        metrics_df = pd.DataFrame(self.metrics, columns = ['episode', 'total_reward', 'average_loss'])
+        metrics_df.to_csv("results/tracking_ep100_dat700.csv")
+
+        # Save weights
+        self.my_agent.main_network.save("saved_models/agent_ep100_dat700.keras")
 
     def score(self):
-        pass
+        # Assuming `episodes` and `total_rewards` are lists or arrays
+        plt.figure(figsize=(10, 6))
+        plt.plot(episodes, total_rewards, label='Total Reward')
+        plt.xlabel('Episode')
+        plt.ylabel('Total Reward')
+        plt.title('Total Reward per Episode')
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(episodes, average_loss, label='Average Loss', color='orange')
+        plt.xlabel('Episode')
+        plt.ylabel('Average Loss')
+        plt.title('Average Loss per Episode')
+        plt.legend()
+        plt.grid()
+        plt.show()
