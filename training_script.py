@@ -4,15 +4,15 @@ from deepQ_agent import deepQ_agent
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import datetime
 
 class TrainingSimulator:
-    def __init__(self, dataset, state_attributes, state_size, action_size, n_episodes, n_timesteps, batch_size, optimal_moisture, n_step, irrigation_map):
+    def __init__(self, dataset, state_attributes, state_size, action_size, n_episodes, batch_size, optimal_moisture, n_step, irrigation_map):
         self.dataset = dataset
         self.state_attributes = state_attributes
         self.state_size = state_size
         self.action_size = action_size
         self.n_episodes = n_episodes
-        self.n_timesteps = n_timesteps
         self.batch_size = batch_size
         self.optimal_moisture = optimal_moisture
         self.n_step = n_step
@@ -21,12 +21,13 @@ class TrainingSimulator:
         self.my_agent = deepQ_agent(state_size, action_size)
 
         # Metrics for evaluations
-        self.metrics = []
+        self.metrics_df = None
         self.total_time = 0
 
-    def reset(self, dataset, retrain = False, saved_model = None):
-        self.metrics = []
+    def reset(self, dataset, retrain = False, saved_model = None, n_episodes = None):
+        self.metrics_df = None
         self.total_time = 0
+        
         if retrain:
             self.my_agent = deepQ_agent(self.state_size, self.action_size, saved_model, 0.5)
             self.dataset = dataset
@@ -34,11 +35,15 @@ class TrainingSimulator:
             self.my_agent = deepQ_agent(self.state_size, self.action_size)
             self.dataset = dataset
 
+        if n_episodes:
+            self.n_episodes = n_episodes
+
     def run(self):
         env = TrainingEnvironment(self.dataset, self.state_attributes, self.optimal_moisture, self.n_step)
         env.fit()
 
         state = env.reset()
+        metrics = []
 
         for ep in range(self.n_episodes):
             print(f"Episode {ep + 1}/{self.n_episodes}")
@@ -47,20 +52,12 @@ class TrainingSimulator:
             ep_losses = []
             
             # Iterate over training data
-            for i in range(self.n_timesteps):
+            while 1:
                 self.total_time += 1
-                # state = state_data[i]
 
                 # Take action, observe reward and next state
                 action = self.my_agent.make_decision(state)
-                # action = self.irrigation_map[irrigation_action]  # Map irrigation to action index
-                # next_state = state_data[i + 1]
                 next_state, reward, terminal = env.step(action)
-
-                # reward = get_reward(reward_data[i], action)
-
-                # Check if terminal state (last row)
-                # terminal = i == len(train_df) - 2
 
                 # Store the experience in replay buffer
                 self.my_agent.memorize(state, action, reward, next_state, terminal)
@@ -86,33 +83,45 @@ class TrainingSimulator:
                 self.my_agent.epsilon = self.my_agent.epsilon * self.my_agent.epsilon_decay
 
             # Log metrics for the episode
-            self.metrics.append({
+            metrics.append({
                 'episode': ep + 1,
                 'total_reward': ep_rewards,
                 'average_loss': np.mean(ep_losses) if ep_losses else 0,
             })
-        metrics_df = pd.DataFrame(self.metrics, columns = ['episode', 'total_reward', 'average_loss'])
-        metrics_df.to_csv("results/tracking_ep100_dat700.csv")
+
+        timenow = '{date:%Y-%m-%d_%H-%M-%S}'.format(date = datetime.datetime.now())
+        self.metrics_df = pd.DataFrame(metrics, columns = ['episode', 'total_reward', 'average_loss'])
+        self.metrics_df.to_csv("results/tracking_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + timenow + ".csv")
 
         # Save weights
-        self.my_agent.main_network.save("saved_models/agent_ep100_dat700.keras")
+        self.my_agent.main_network.save("saved_models/agent_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + timenow + ".keras")
 
     def score(self):
-        # Assuming `episodes` and `total_rewards` are lists or arrays
-        plt.figure(figsize=(10, 6))
-        plt.plot(episodes, total_rewards, label='Total Reward')
-        plt.xlabel('Episode')
-        plt.ylabel('Total Reward')
-        plt.title('Total Reward per Episode')
-        plt.legend()
-        plt.grid()
-        plt.show()
+        episodes = self.metrics_df['episodes'].values
+        total_rewards = self.metrics_df['total_rewards'].values
+        average_loss = self.metrics_df['average_loss'].values
 
-        plt.figure(figsize=(10, 6))
-        plt.plot(episodes, average_loss, label='Average Loss', color='orange')
-        plt.xlabel('Episode')
-        plt.ylabel('Average Loss')
-        plt.title('Average Loss per Episode')
-        plt.legend()
-        plt.grid()
+        # Create a figure with two subplots (1 row, 2 columns)
+        _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+        # First plot: Total Reward per Episode
+        ax1.plot(episodes, total_rewards, label='Total Reward')
+        ax1.set_xlabel('Episode')
+        ax1.set_ylabel('Total Reward')
+        ax1.set_title('Total Reward per Episode')
+        ax1.legend()
+        ax1.grid()
+
+        # Second plot: Average Loss per Episode
+        ax2.plot(episodes, average_loss, label='Average Loss', color='orange')
+        ax2.set_xlabel('Episode')
+        ax2.set_ylabel('Average Loss')
+        ax2.set_title('Average Loss per Episode')
+        ax2.legend()
+        ax2.grid()
+
+        # Adjust layout to avoid overlap
+        plt.tight_layout()
+
+        # Show the combined figure
         plt.show()
