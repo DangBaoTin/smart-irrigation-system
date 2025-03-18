@@ -4,7 +4,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
 import numpy as np
-import pandas as pd
 
 class TrainingEnvironment:
     def __init__(self, dataset, state_attributes, optimal_moisture, timestep):
@@ -23,7 +22,8 @@ class TrainingEnvironment:
         self.current_state = np.append(self.state_data[0], call_rain())
     
     def fit(self):
-        X_COLUMNS = ['temperature','humidity', 'pH', 'current_soil_moisture', 'irrigation_amount', 'duration']
+        # X_COLUMNS = ['temperature','humidity', 'pH', 'current_soil_moisture', 'irrigation_amount', 'duration']
+        X_COLUMNS = self.state_attributes
         Y_COLUMNS = ['soil_moisture_after']
 
         X = self.df[X_COLUMNS]
@@ -34,7 +34,7 @@ class TrainingEnvironment:
     def reset(self):
         """Reset the environment to the start of the dataset."""
         self.current_index = 0
-        return np.append(self.state_data[0], call_rain())
+        return self.state_data[0]
     
     def step(self, action):
         """Move to the next state based on dataset order."""
@@ -42,14 +42,6 @@ class TrainingEnvironment:
         next_state_moisture = self.model.predict(self.current_state)
         next_state = np.append(self.state_data[self.current_index + 1], [irrigation_amount, next_state_moisture])
         reward = compute_reward(self.state_data['current_soil_moisture'][self.current_index], next_state_moisture, 1)
-
-        if self.current_index >= self.n_timesteps:
-            return None, 0, True  # End of dataset
-        
-        # sample = self.data[self.current_index]
-        # next_sample = self.data[self.current_index + 1]
-        # next_state = self.extract_state(next_sample)
-        # reward = self.get_reward(sample, action)
         self.current_state = next_state
         self.current_index += 1
         done = self.current_index >= self.EoS

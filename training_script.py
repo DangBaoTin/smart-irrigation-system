@@ -89,12 +89,12 @@ class TrainingSimulator:
                 'average_loss': np.mean(ep_losses) if ep_losses else 0,
             })
 
-        timenow = '{date:%Y-%m-%d_%H-%M-%S}'.format(date = datetime.datetime.now())
+        self.timenow = '{date:%Y-%m-%d_%H-%M-%S}'.format(date = datetime.datetime.now())
         self.metrics_df = pd.DataFrame(metrics, columns = ['episode', 'total_reward', 'average_loss'])
-        self.metrics_df.to_csv("results/tracking_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + timenow + ".csv")
+        self.metrics_df.to_csv("results/tracking_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".csv")
 
         # Save weights
-        self.my_agent.main_network.save("saved_models/agent_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + timenow + ".keras")
+        self.my_agent.main_network.save("saved_models/agent_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".keras")
 
     def score(self):
         episodes = self.metrics_df['episodes'].values
@@ -125,3 +125,6 @@ class TrainingSimulator:
 
         # Show the combined figure
         plt.show()
+
+        # Save evaluation figure
+        plt.savefig("results/figures/tracking_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".png")
