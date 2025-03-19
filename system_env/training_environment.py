@@ -39,9 +39,11 @@ class TrainingEnvironment:
     def step(self, action):
         """Move to the next state based on dataset order."""
         irrigation_amount = self.irrigation_map[action]
+        self.current_state[1] = irrigation_amount
         next_state_moisture = self.model.predict(self.current_state)
-        next_state = np.append(self.state_data[self.current_index + 1], [irrigation_amount, next_state_moisture])
-        reward = compute_reward(self.state_data['current_soil_moisture'][self.current_index], next_state_moisture, 1)
+        # next_state = np.append(self.state_data[self.current_index + 1], [irrigation_amount, next_state_moisture])
+        # reward = compute_reward(self.state_data['current_soil_moisture'][self.current_index], next_state_moisture, 1)
+        reward = compute_reward(self.current_state[0], next_state_moisture, 1)
         self.current_state = next_state
         self.current_index += 1
         done = self.current_index >= self.EoS

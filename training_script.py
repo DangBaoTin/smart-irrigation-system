@@ -101,30 +101,22 @@ class TrainingSimulator:
         total_rewards = self.metrics_df['total_rewards'].values
         average_loss = self.metrics_df['average_loss'].values
 
-        # Create a figure with two subplots (1 row, 2 columns)
-        _, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-
         # First plot: Total Reward per Episode
-        ax1.plot(episodes, total_rewards, label='Total Reward')
-        ax1.set_xlabel('Episode')
-        ax1.set_ylabel('Total Reward')
-        ax1.set_title('Total Reward per Episode')
-        ax1.legend()
-        ax1.grid()
+        plt.figure(figsize=(10, 6))
+        plt.plot(episodes, total_rewards, label='Total Reward')
+        plt.xlabel('Episode')
+        plt.ylabel('Total Reward')
+        plt.title('Total Reward per Episode')
+        plt.legend()
+        plt.grid()
+        plt.savefig("results/figures/totalreward_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".png")
 
         # Second plot: Average Loss per Episode
-        ax2.plot(episodes, average_loss, label='Average Loss', color='orange')
-        ax2.set_xlabel('Episode')
-        ax2.set_ylabel('Average Loss')
-        ax2.set_title('Average Loss per Episode')
-        ax2.legend()
-        ax2.grid()
-
-        # Adjust layout to avoid overlap
-        plt.tight_layout()
-
-        # Show the combined figure
-        plt.show()
-
-        # Save evaluation figure
-        plt.savefig("results/figures/tracking_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".png")
+        plt.figure(figsize=(10, 6))
+        plt.plot(episodes, average_loss, label='Average Loss', color='orange')
+        plt.xlabel('Episode')
+        plt.ylabel('Average Loss')
+        plt.title('Average Loss per Episode')
+        plt.legend()
+        plt.grid()
+        plt.savefig("results/figures/averageloss_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".png")
