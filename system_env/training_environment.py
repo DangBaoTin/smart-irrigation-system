@@ -7,7 +7,7 @@ import numpy as np
 
 class TrainingEnvironment:
     def __init__(self, dataset, state_attributes, optimal_moisture, timestep):
-        self.df = dataset
+        self.dataset = dataset
         self.state_attributes = state_attributes
         self.optimal_moisture = optimal_moisture
         self.timestep = timestep
@@ -22,12 +22,17 @@ class TrainingEnvironment:
         self.current_state = np.append(self.state_data[0], call_rain())
     
     def fit(self):
+        # Reshape the data
+        df = self.dataset
+        df["soil_moisture_after"] = df["soil_moisture"].shift(-1)
+        df["soil_moisture_after"].fillna(-1, inplace=True)
+
         # X_COLUMNS = ['temperature','humidity', 'pH', 'current_soil_moisture', 'irrigation_amount', 'duration']
         X_COLUMNS = self.state_attributes
         Y_COLUMNS = ['soil_moisture_after']
 
-        X = self.df[X_COLUMNS]
-        y = self.df[Y_COLUMNS]
+        X = df[X_COLUMNS]
+        y = df[Y_COLUMNS]
 
         self.model.fit(X, y)
 
@@ -38,16 +43,16 @@ class TrainingEnvironment:
     
     def step(self, action):
         """Move to the next state based on dataset order."""
+        """[current_soil_moisture, irrigation_amount, ...]"""
         irrigation_amount = self.irrigation_map[action]
         self.current_state[1] = irrigation_amount
         next_state_moisture = self.model.predict(self.current_state)
-        # next_state = np.append(self.state_data[self.current_index + 1], [irrigation_amount, next_state_moisture])
-        # reward = compute_reward(self.state_data['current_soil_moisture'][self.current_index], next_state_moisture, 1)
         reward = compute_reward(self.current_state[0], next_state_moisture, 1)
+        next_state = self.state_data[self.current_index + 1]
+        next_state[0] = next_state_moisture
         self.current_state = next_state
         self.current_index += 1
         done = self.current_index >= self.EoS
-        
         return next_state, reward, done
     
     def get_total_timesteps(self):
