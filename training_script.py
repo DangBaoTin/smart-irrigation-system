@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import datetime
+import time
 
 class TrainingSimulator:
-    def __init__(self, dataset, state_attributes, state_size, action_size, n_episodes, batch_size, optimal_moisture, n_step, irrigation_map):
+    def __init__(self, dataset, state_attributes, state_size, action_size, n_episodes, batch_size, optimal_moisture, irrigation_map):
         self.dataset = dataset
         self.state_attributes = state_attributes
         self.state_size = state_size
@@ -15,7 +16,6 @@ class TrainingSimulator:
         self.n_episodes = n_episodes
         self.batch_size = batch_size
         self.optimal_moisture = optimal_moisture
-        self.n_step = n_step
         self.irrigation_map = irrigation_map
 
         self.my_agent = deepQ_agent(state_size, action_size)
@@ -39,21 +39,23 @@ class TrainingSimulator:
             self.n_episodes = n_episodes
 
     def run(self):
-        env = TrainingEnvironment(self.dataset, self.state_attributes, self.optimal_moisture, self.n_step)
+        env = TrainingEnvironment(self.dataset, self.state_attributes, self.optimal_moisture, self.irrigation_map)
         env.fit()
 
-        state = env.reset()
         metrics = []
+        update_time = 0
 
+        start = time.time()
         for ep in range(self.n_episodes):
             print(f"Episode {ep + 1}/{self.n_episodes}")
-
+            
+            state = env.reset()
             ep_rewards = 0
             ep_losses = []
             
             # Iterate over training data
             while 1:
-                self.total_time += 1
+                update_time += 1
 
                 # Take action, observe reward and next state
                 action = self.my_agent.make_decision(state)
@@ -69,7 +71,7 @@ class TrainingSimulator:
                         ep_losses.append(metrics_from_replay['training_loss'])
                 
                 # Cập nhật lại target NN mỗi my_agent.update_targetnn_rate
-                if self.total_time % self.my_agent.update_targetNN_rate == 0:
+                if update_time % self.my_agent.update_targetNN_rate == 0:
                     self.my_agent.update_target_network()
 
                 state = next_state
@@ -88,17 +90,26 @@ class TrainingSimulator:
                 'total_reward': ep_rewards,
                 'average_loss': np.mean(ep_losses) if ep_losses else 0,
             })
+        end = time.time()
+        self.total_time = end - start
 
         self.timenow = '{date:%Y-%m-%d_%H-%M-%S}'.format(date = datetime.datetime.now())
         self.metrics_df = pd.DataFrame(metrics, columns = ['episode', 'total_reward', 'average_loss'])
-        self.metrics_df.to_csv("results/tracking_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".csv")
+        self.metrics_df.to_csv("results/details/tracking_ep" + str(self.n_episodes) + "dat" + str(len(self.dataset)) + "_" + self.timenow + ".csv")
+
+        print("Training batch ends with ", self.total_time, " seconds")
+        pd.DataFrame({
+            "Number of Episodes": [self.n_episodes],
+            "Average Rewards": [np.mean(self.metrics_df['total_reward'].values)],
+            "Total training time": [self.total_time]
+            }).to_csv("results/results_ep" + str(self.n_episodes) + "dat" + str(len(self.dataset)) + "_" + self.timenow + ".csv")
 
         # Save weights
-        self.my_agent.main_network.save("saved_models/agent_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".keras")
+        self.my_agent.main_network.save("saved_models/agent_ep" + str(self.n_episodes) + "dat" + str(len(self.dataset)) + "_" + self.timenow + ".keras")
 
     def score(self):
         episodes = self.metrics_df['episodes'].values
-        total_rewards = self.metrics_df['total_rewards'].values
+        total_rewards = self.metrics_df['total_reward'].values
         average_loss = self.metrics_df['average_loss'].values
 
         # First plot: Total Reward per Episode
@@ -109,7 +120,7 @@ class TrainingSimulator:
         plt.title('Total Reward per Episode')
         plt.legend()
         plt.grid()
-        plt.savefig("results/figures/totalreward_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".png")
+        plt.savefig("results/figures/totalreward_ep" + str(self.n_episodes) + "dat" + str(len(self.dataset)) + "_" + self.timenow + ".png")
 
         # Second plot: Average Loss per Episode
         plt.figure(figsize=(10, 6))
@@ -119,4 +130,4 @@ class TrainingSimulator:
         plt.title('Average Loss per Episode')
         plt.legend()
         plt.grid()
-        plt.savefig("results/figures/averageloss_ep" + self.n_episodes + "dat" + len(self.dataset) + "_" + self.timenow + ".png")
+        plt.savefig("results/figures/averageloss_ep" + str(self.n_episodes) + "dat" + str(len(self.dataset)) + "_" + self.timenow + ".png")

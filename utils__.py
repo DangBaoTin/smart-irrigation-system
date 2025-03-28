@@ -46,8 +46,8 @@ def compute_reward(M_t, M_t_next, t, M_opt=35.0, decay_rate=0.05):
     Returns:
     - Reward value (higher when moisture is close to the target)
     """
-    M_target_t = target_moisture(t, M_opt, decay_rate)  # Ideal moisture at time t
-    M_target_next = target_moisture(t+1, M_opt, decay_rate)  # Ideal moisture at next step
+    M_target_t = target_moisture(t, M_opt, decay_rate)          # Ideal moisture at time t
+    M_target_next = target_moisture(t+1, M_opt, decay_rate)     # Ideal moisture at next step
 
     # Compute the integral approximation (discrete sum)
     deviation_t = abs(M_t - M_target_t)
