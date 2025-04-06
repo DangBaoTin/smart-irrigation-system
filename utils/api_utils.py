@@ -4,7 +4,7 @@ import logging
 import requests
 import openmeteo_requests
 import requests_cache
-import pandas as PD
+import pandas as pd
 from retry_requests import retry
 from kafka import KafkaProducer
 
@@ -34,7 +34,9 @@ class MeteoAPI:
         self.openmeteo = openmeteo_requests.Client(session=self.retry_session)
     
     
-    def getWeatherState(state:list[str], lat=10.823, lon=106.6296, timezone='Asia/Bangkok', forecast_days=1):
+    def getWeatherState(self, state:list[str]=None, lat=10.823, lon=106.6296, timezone='Asia/Bangkok', forecast_days=1):
+        if state == None:
+            state = self.state
         
         params = {
             "latitude": lat,
@@ -45,14 +47,14 @@ class MeteoAPI:
         }
         
         try:
-            responses = openmeteo.weather_api(self.meteo_url, params=params)
-            return transformMeteoRespose(responses[0], timezone)
+            responses = self.openmeteo.weather_api(self.meteo_url, params=params)
+            return self.transformMeteoRespose(responses[0], timezone)
                 
         except Exception as exc:
             print(f'ERROR - getWeatherState(): {exc}')
             return None 
 
-    def transformMeteoRespose(response, timezone):
+    def transformMeteoRespose(self, response, timezone):
         print(f"Coordinates {response.Latitude()}°N {response.Longitude()}°E")
         print(f"Elevation {response.Elevation()} m asl")
         print(f"Timezone {response.Timezone()} {response.TimezoneAbbreviation()}")
@@ -73,7 +75,7 @@ class MeteoAPI:
             inclusive = "left"
         )}
         
-        hourly_data["id"] = [dt.strftime("%Y%m%d %H%M%S") for dt in hourly_data["date"]]
+        # hourly_data["id"] = [dt.strftime("%Y%m%d%H%M%S") for dt in hourly_data["date"]]
         hourly_data["temperature"] = hourly_temperature_2m
         hourly_data["humidity"] = hourly_relative_humidity_2m
         hourly_data["rain"] = hourly_rain
@@ -82,9 +84,10 @@ class MeteoAPI:
         # print(hourly_data)
 
         hourly_dataframe = pd.DataFrame(data = hourly_data)
+        # hourly_dataframe["id"] = hourly_dataframe["id"].astype(int)
         # print(hourly_dataframe)
         return hourly_dataframe
 
-    def format_data(data):
+    def format_data(self, data):
         pass
 

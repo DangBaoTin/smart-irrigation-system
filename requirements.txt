@@ -11,6 +11,13 @@ scipy==1.10
 
 scikit-learn
 kafka-python
+openmeteo_requests
+requests_cache
+retry_requests
+
+sqlalchemy
+dotenv
+psycopg2-binary
 
 # aquacrop
 # aquacropeto==0.1.1

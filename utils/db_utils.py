@@ -85,7 +85,7 @@ class DatabaseInteractor:
             # there are some cases that the column type is not matched but still acceptable: varchar and string, int and int64,...
             for col in df_columns:
                 if col in table_columns and df_columns[col] != str(table_columns[col]):
-                    if 'varchar' in str(table_columns[col]).lower() ==  and df_columns[col] == 'string':
+                    if 'varchar' in str(table_columns[col]).lower() and df_columns[col] == 'string':
                         continue
                     if str(table_columns[col]).lower() == 'int' and df_columns[col] == 'int64':
                         continue
@@ -179,39 +179,41 @@ class DatabaseInteractor:
             return False
 
     def read_table(self, schema:str='public', table_name:str='', query:str=None):
-        if not table_name:
-            raise ValueError("Table name is required.")
-        
-        if not self.isExisted(schema=schema, table_name=table_name):
-            print(f"[ERROR] Table {schema}.{table_name} does not exist.")
-            return None
-        
-        if query is None:
-            query = f"select * from {schema}.{table_name}"
-        return pd.read_sql(query, self.engine)
+        try:
+            if not table_name:
+                raise ValueError("Table name is required.")
+            
+            if not self.isExisted(schema=schema, table_name=table_name):
+                print(f"[ERROR] Table {schema}.{table_name} does not exist.")
+                return None
+            
+            if query is None:
+                query = f"select * from {schema}.{table_name}"
+            return pd.read_sql(query, self.engine)
         
         except Exception as e:
-            print(f"Error reading data from table {schema}.{table_name}: {e}")
+            print(f"[ERROR] read_table(): {schema}.{table_name}: {e}")
             return None
             
-    def read_latest_record(self, time_column:str, conditions:list(str), schema:str='public', table_name:str=''):
-        if not table_name:
-            raise ValueError("Table name is required.")
-        
-        if not self.isExisted(schema=schema, table_name=table_name):
-            print(f"[ERROR] Table {schema}.{table_name} does not exist.")
-            return None
-        
-        query = f"select * from {schema}.{table_name}"
-        if len(conditions) > 0:
-            query += 'where 1 = 1'
-            query += ' and '.join(conditions)
-        
-        query += f'order by {time_column} desc limit 1'
-        return pd.read_table(schema=schema, table_name=table_name, query=query)
+    def read_latest_record(self, time_column:str, conditions:list[str]=[], schema:str='public', table_name:str=''):
+        try:
+            if not table_name:
+                raise ValueError("Table name is required.")
+            
+            if not self.isExisted(schema=schema, table_name=table_name):
+                print(f"[ERROR] Table {schema}.{table_name} does not exist.")
+                return None
+            
+            query = f"select * from {schema}.{table_name}"
+            if len(conditions) > 0:
+                query += 'where 1 = 1'
+                query += ' and '.join(conditions)
+            
+            query += f'order by {time_column} desc limit 1'
+            return pd.read_table(schema=schema, table_name=table_name, query=query)
         
         except Exception as e:
-            print(f"Error reading data from table {schema}.{table_name}: {e}")
+            print(f"[ERROR] read_latest_record(): {schema}.{table_name}: {e}")
             return None
     
     

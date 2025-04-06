@@ -14,3 +14,4 @@ train_agent.ipynb
 **/.DS_Store
 test
 data_platform_1
+.env
