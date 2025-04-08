@@ -47,22 +47,22 @@ def generate_timestamp(start_date, num_samples):
 num_rows = 2 
 now_time = datetime.now()
 now_time = int(datetime.strftime(now_time, "%Y%m%d%H%M%S"))
-_DF = pd.DataFrame({
-    'id': generate_timestamp(now_time, num_rows), 
-    'place_id': [1 for _ in range(num_rows)],
-    'temperature': [random.uniform(20, 35) for _ in range(num_rows)], 
-    'humidity': [random.uniform(40, 80) for _ in range(num_rows)], 
-    'salinity': [random.uniform(0, 40) for _ in range(num_rows)], 
-    'ph': [random.uniform(6, 8) for _ in range(num_rows)],
-    'rain': [random.uniform(0, 50) for _ in range(num_rows)], 
-    's_moist': [random.uniform(10, 50) for _ in range(num_rows)],
-    'created_at': [datetime.now() for _ in range(num_rows)],
-    'updated_at': [datetime.now() for _ in range(num_rows)],
-    'requested_at': [datetime.now() for _ in range(num_rows)]
-})
+# _DF = pd.DataFrame({
+#     'id': generate_timestamp(now_time, num_rows), 
+#     'place_id': [1 for _ in range(num_rows)],
+#     'temperature': [random.uniform(20, 35) for _ in range(num_rows)], 
+#     'humidity': [random.uniform(40, 80) for _ in range(num_rows)], 
+#     'salinity': [random.uniform(0, 40) for _ in range(num_rows)], 
+#     'ph': [random.uniform(6, 8) for _ in range(num_rows)],
+#     'rain': [random.uniform(0, 50) for _ in range(num_rows)], 
+#     's_moist': [random.uniform(10, 50) for _ in range(num_rows)],
+#     'created_at': [datetime.now() for _ in range(num_rows)],
+#     'updated_at': [datetime.now() for _ in range(num_rows)],
+#     'requested_at': [datetime.now() for _ in range(num_rows)]
+# })
 
-_DF['id'] = _DF['id'].astype(int)
-_DF.loc[0, ['temperature', 'humidity', 's_moist']] = np.nan
+# _DF['id'] = _DF['id'].astype(int)
+# _DF.loc[0, ['temperature', 'humidity', 's_moist']] = np.nan
 
 
 class VirtuaEnv:
@@ -81,8 +81,6 @@ class VirtuaEnv:
 
     def get_n_state_before(self, n, mark_time=None, mark_id=None, duration=None, cols=[]):
         # duration: {days, hours, minutes, seconds}
-
-        # return  _DF # ...
         
         current_time = datetime.now()
         
@@ -126,9 +124,7 @@ class VirtuaEnv:
                 select * from cte where row_num <= {n}
             """
             
-        # df = db_utils.read_table(table_name='state', query=query)
-        # ...
-        df = _DF
+        df = self.db_utils.read_table(table_name='state', query=query)
         df = df[ENV_STATE['cols']] if (len(cols) == 0) else df[['id'] + cols]
         df = df.sort_values(by="id", ascending=False).head(n)
         df = df[cols]
@@ -169,10 +165,8 @@ class VirtuaEnv:
         """
         
         while (retries < 5) and (not isSuccess):
-            # state_df = self.db_utils.read_table(table_name='state', query=query)
-            #  ...
-            state_df = _DF.iloc[0]
-            print(str(state_df['id']))
+            state_df = self.db_utils.read_table(table_name='state', query=query)
+
             if (state_df is not None) and (len(state_df) > 0):
                 current_time = datetime.now()
                 state_time = datetime.strptime(str(state_df['id'])[:-2], '%Y%m%d%H%M%S')
@@ -234,9 +228,7 @@ class VirtuaEnv:
                 select * from cte where row_num <= {n}
             """
             
-        # df = db_utils.read_table(table_name='log', query=query)
-        # ...
-        df = _DF
+        df = db_utils.read_table(table_name='log', query=query)
         df = df[ENV_STATE['cols']] if (len(cols) == 0) else df[['id'] + cols]
         df = df.sort_values(by="id", ascending=False).head(n)
         df = df[cols]
@@ -277,10 +269,8 @@ class VirtuaEnv:
         """
         
         while (retries < 5) and (not isSuccess):
-            # log_df = self.db_utils.read_table(table_name='log_data', query=query)
-            #  ...
-            log_df = _DF.iloc[0]
-            print(str(log_df['id']))
+            log_df = self.db_utils.read_table(table_name='log_data', query=query)
+            # print(str(log_df['id']))
             if (log_df is not None) and (len(log_df) > 0):
                 current_time = datetime.now()
                 log_time = datetime.strptime(str(log_df['id'])[:-2], '%Y%m%d%H%M%S')
@@ -364,7 +354,7 @@ class VirtuaEnv:
                 _, state_df = self.get_n_state_before(n=n, mark_time=mark_time - timedelta(hours=24), cols=ENV_STATE['cols'][2:-2])
                 for key in json_data.keys():
                     state_df[key] = json_data[key]
-            state_df = _DF[ENV_STATE['cols'][2:-2]]
+            # state_df = _DF[ENV_STATE['cols'][2:-2]]
             state_df = pd.DataFrame([state_df.values.flatten()], columns=[f"{col}{i}" for i in range(len(state_df)) for col in state_df.columns])
 
             ordered_cols = sorted(state_df.columns)
@@ -378,26 +368,26 @@ if __name__ == '__main__':
     # trained_model = 'model.h5'
     # steps = 5
     load_dotenv()
-    # db_utils = DatabaseInteractor(
-    #     host=os.getenv('POSTGRES_HOST')
-    #     , port=os.getenv('POSTGRES_PORT')
-    #     , db_name='sis'
-    #     , user=os.getenv('POSTGRES_USER')
-    #     , password=os.getenv('POSTGRES_PASSWORD')
-    # )
+    db_utils = DatabaseInteractor(
+        host=os.getenv('POSTGRES_HOST')
+        , port=os.getenv('POSTGRES_PORT')
+        , db_name='sis'
+        , user=os.getenv('POSTGRES_USER')
+        , password=os.getenv('POSTGRES_PASSWORD')
+    )
     
-    # meteo_api = MeteoAPI(
-    #     lat=10.823
-    #     , lon=106.6296
-    #     , timezone='Asia/Bangkok'
-    #     , forecast_days=1
-    #     , meteo_state=['temperature_2m', 'relative_humidity_2m', 'rain', 'evapotranspiration', 'wind_speed_10m']
-    # )
+    meteo_api = MeteoAPI(
+        lat=10.823
+        , lon=106.6296
+        , timezone='Asia/Bangkok'
+        , forecast_days=1
+        , meteo_state=['temperature_2m', 'relative_humidity_2m', 'rain', 'evapotranspiration', 'wind_speed_10m']
+    )
     
-    # log_producer = Producer(
-    #     bootstrap_servers=STREAMING_INFO['bootstrap_servers']
-    #     , topic_name=STREAMING_INFO['topic_name'][1]
-    # )
+    log_producer = Producer(
+        bootstrap_servers=STREAMING_INFO['bootstrap_servers']
+        , topic_name=STREAMING_INFO['topic_name'][1]
+    )
     
     
     db_utils = None

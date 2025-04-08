@@ -13,15 +13,16 @@ from dotenv import load_dotenv
 from sqlalchemy import inspect
 import os
 
-BOOTSTRAP_SERVERS = ["localhost:9092", "localhost:9094"]
+
+BOOTSTRAP_SERVERS = ['localhost:9092', 'localhost:9094']
 TOPIC_NAMES = ['state_xx0', 'log_data_xx0']
 STREAMING_INFO = {
     'bootstrap_servers': ['localhost:9092', 'localhost:9094']
     , 'topic_name': ['state_xx0', 'log_data_xx0']
-    , 'consumer_group_id': 'AI_agent_xx0'
+    , 'consumer_group_id': ['AI_agent_xx0']
 }
-CONSUMER_GROUP_ID = 'AI_agent_xx0'
 DF_COLUMNS = ['id', 'temperature', 'humidity', 'rain', 'evapo', 'wind', 's_moist', 'created_at']
+
 
 class StateConsumer:
     def __init__(self, bootstrap_servers, topic_name, consumer_group_id):
@@ -57,7 +58,7 @@ class StateConsumer:
         except Exception as e:
             logging.error(f'[ERROR] consume_data(): {e}')
             return None
-        
+
 
 class Producer:
     def __init__(self, bootstrap_servers, topic_name):
@@ -82,3 +83,4 @@ class Producer:
         except Exception as e:
             logging.error(f'[ERROR] send_data(): {e}')
             return None
+

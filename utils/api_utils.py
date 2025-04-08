@@ -16,6 +16,7 @@ class MeteoAPI:
             , lon=106.6296
             , timezone='Asia/Bangkok'
             , forecast_days=1
+            , past_days=0
             , meteo_state=['temperature_2m', 'relative_humidity_2m', 'rain', 'evapotranspiration', 'wind_speed_10m']
             , cache_expire_after=3600
             , retry_retries=5
@@ -25,6 +26,7 @@ class MeteoAPI:
         self.lon = lon
         self.timezone = timezone
         self.forecast_days = forecast_days
+        self.past_days = past_days
         self.meteo_url = "https://api.open-meteo.com/v1/forecast"
         
         self.state = meteo_state
@@ -34,7 +36,7 @@ class MeteoAPI:
         self.openmeteo = openmeteo_requests.Client(session=self.retry_session)
     
     
-    def getWeatherState(self, state:list[str]=None, lat=10.823, lon=106.6296, timezone='Asia/Bangkok', forecast_days=1):
+    def getWeatherState(self, state:list[str]=None, lat=10.823, lon=106.6296, timezone='Asia/Bangkok', forecast_days=1, past_days=0):
         if state == None:
             state = self.state
         
@@ -43,7 +45,8 @@ class MeteoAPI:
             "longitude": lon,
             "hourly": state,
             "timezone": "Asia/Bangkok",
-            "forecast_days": 1
+            "past_days": past_days,
+            "forecast_days": forecast_days
         }
         
         try:
