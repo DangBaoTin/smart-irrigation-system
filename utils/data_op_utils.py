@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 import numpy as np
-from datetime import datetime as dt, timedelta
+from datetime import datetime as datetime, timedelta
 import sys, os
 import random
 import math
@@ -16,27 +16,24 @@ class DataGenerator:
         self.state_df = {
             'columns': ['id', 'temperature', 'humidity', 'rain', 'salinity', 'ph', 'soil_moisture'],
         }
-        self.meteo_api_args = meteo_api_args
-        
-        
+        self.meteo_api_args = meteo_api_args     
     
     def init_open_meteo(self, days):
         if self.meteo_api_args is None:
             raise ValueError("Meteo API arguments must be provided.")
         
-        if days <= 60: 
-            past_days = days
-            forecast_days = 0
-        else:
-            past_days = 60
-            forecast_days = days - 60
+        today = datetime.now().date()
+        start_date = today - timedelta(days=2)
+        end_date = today + timedelta(days=days)
+        start_date_str = start_date.strftime("%Y-%m-%d")
+        end_date_str = end_date.strftime("%Y-%m-%d")
         
         return MeteoAPI(
             lat=self.meteo_api_args.get('lat', 10.823),
             lon=self.meteo_api_args.get('lon', 106.6296),
             timezone=self.meteo_api_args.get('timezone', 'Asia/Bangkok'),
-            past_days=past_days,
-            forecast_days=forecast_days,
+            start_date=start_date_str,
+	        end_date=end_date_str,
             meteo_state=self.meteo_api_args.get('meteo_state', [])
         )
     
@@ -55,7 +52,6 @@ class DataGenerator:
         # print(state_df.columns)
         rows = []
         
-        
         for _, row in state_df.iterrows():
             base_time = row['date']
             for i in range(math.floor(60 / interval)):
@@ -72,12 +68,50 @@ class DataGenerator:
         new_df = pd.DataFrame(rows).reset_index(drop=True)
         
         self.state_df = new_df[self.state_df['columns']]
-        # print(new_df[self.state_df['columns']])
+        return self.state_df
         
     def write_df(self, opath):
-        self.state_df.to_csv('./data/env_state.csv', index=False)
+        self.state_df.to_csv('../data/env_state.csv', index=False)
     
+
+class DataGetter:
+    def __init__(self, csv_path=None):
+        self.csv_path = csv_path
+
+    def get_data(self, combine_num = 1):
+        if self.csv_path is None:
+            raise ValueError("CSV path must be provided.")
+        
+        df = pd.read_csv(self.csv_path)
+        self.df = df
+        
+        if combine_num > 1:
+            df = self.combine_rows(df, combine_num)
+        else:
+            df = df.sort_values('id', ascending=False).reset_index(drop=True)
+
+        return df
     
+    def combine_rows(self, df, n):
+        df_sorted = df.sort_values('id', ascending=False).reset_index(drop=True)
+        cols = df.columns
+        combined_data = []
+
+        for i in range(len(df_sorted) - n + 1):
+            chunk = df_sorted.iloc[i:i + n].reset_index(drop=True)
+            combined_row = {}
+
+            combined_row['id'] = chunk.loc[0, 'id']
+
+            for col in cols:
+                if col == 'id':
+                    continue
+                for j in range(n):
+                    combined_row[f"{col}{j}"] = chunk.loc[j, col]
+
+            combined_data.append(combined_row)
+
+        return pd.DataFrame(combined_data)
     
     
 if __name__ == "__main__":
@@ -92,5 +126,10 @@ if __name__ == "__main__":
     
     days = 120       # days
     interval = 1    # minutes
-    data_gen.generate_state(days, interval)
-    data_gen.write_df('../data/env_state.csv')
+    # print(data_gen.generate_state(days, interval))
+    
+    # Change the file name to your desired output path
+    # data_gen.write_df('../data/env_state.csv')
+    
+    data_getter = DataGetter(csv_path='/mnt/d/_ACADEMIC/HCMUT/Term242/Project_Smart_Irrigation/code_/smart-irrigation-system/data/env_state.csv')
+    print(data_getter.get_data(combine_num=2))

@@ -97,8 +97,7 @@ class DatabaseInteractor:
                     return False, 'type_mismatches'
         
             return True, 'compatible'
-        
-        
+
         
         except Exception as e:
             print(f"[ERROR] {e}")

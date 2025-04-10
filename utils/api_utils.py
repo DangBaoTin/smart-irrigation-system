@@ -15,8 +15,10 @@ class MeteoAPI:
             , lat=10.823
             , lon=106.6296
             , timezone='Asia/Bangkok'
-            , forecast_days=1
-            , past_days=0
+            , forecast_days=None
+            , past_days=None
+            , start_date=None
+            , end_date=None
             , meteo_state=['temperature_2m', 'relative_humidity_2m', 'rain', 'evapotranspiration', 'wind_speed_10m']
             , cache_expire_after=3600
             , retry_retries=5
@@ -27,6 +29,8 @@ class MeteoAPI:
         self.timezone = timezone
         self.forecast_days = forecast_days
         self.past_days = past_days
+        self.start_date = start_date
+        self.end_date = end_date
         self.meteo_url = "https://api.open-meteo.com/v1/forecast"
         
         self.state = meteo_state
@@ -36,7 +40,17 @@ class MeteoAPI:
         self.openmeteo = openmeteo_requests.Client(session=self.retry_session)
     
     
-    def getWeatherState(self, state:list[str]=None, lat=10.823, lon=106.6296, timezone='Asia/Bangkok', forecast_days=1, past_days=0):
+    def getWeatherState(
+            self
+            , state:list[str]=None
+            , lat=10.823
+            , lon=106.6296
+            , timezone='Asia/Bangkok'
+            , forecast_days=None
+            , past_days=None
+            , start_date=None
+            , end_date=None
+        ):
         if state == None:
             state = self.state
         
@@ -46,8 +60,12 @@ class MeteoAPI:
             "hourly": state,
             "timezone": "Asia/Bangkok",
             "past_days": past_days,
-            "forecast_days": forecast_days
+            "forecast_days": forecast_days,
+            "start_date": start_date,
+            "end_date": end_date
         }
+        
+        params = {k: v for k, v in params.items() if v is not None}
         
         try:
             responses = self.openmeteo.weather_api(self.meteo_url, params=params)
