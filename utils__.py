@@ -60,3 +60,10 @@ def compute_reward(M_t, M_t_next, t, M_opt=35.0, decay_rate=0.05):
     reward = -integral_deviation
 
     return reward
+
+def test_get_reward(initial_moisture, irrigation, soil_factor, time_elapsed, optimal_min=30.0, optimal_max=40.0):
+    return reward
+
+def gen_smoist_array(initial_moisture, irrigation, soil_factor, time_elapsed):
+    moisture_after = initial_moisture + (irrigation * soil_factor / 100) - (time_elapsed * 2)
+    return moisture_after

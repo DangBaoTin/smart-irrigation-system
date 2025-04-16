@@ -21,3 +21,16 @@ pip uninstall <package-name>
 deactivate
 rm -rf venv
 ```
+
+# For conda virtual environment (with installed tensorflow on AVX-not-support CPU)
+```bash
+conda create -n tf_env tensorflow=2
+```
+Or
+```bash
+conda create -n venv python=3.6
+conda activate venv
+pip install tensorflow==1.5.0
+conda deactivate
+conda remove -n ENV_NAME --all
+```

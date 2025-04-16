@@ -19,6 +19,24 @@ sqlalchemy
 dotenv
 psycopg2-binary
 
+
+# For juoyter notebook that do not support AVX-included CPU
+tensorflow==1.5.0
+keras
+pandas
+numpy
+matplotlib
+scikit-learn
+
+kafka-python
+openmeteo_requests
+requests_cache
+retry_requests
+
+sqlalchemy
+dotenv
+psycopg2-binary
+
 # aquacrop
 # aquacropeto==0.1.1
 # ray
