@@ -61,9 +61,23 @@ def compute_reward(M_t, M_t_next, t, M_opt=35.0, decay_rate=0.05):
 
     return reward
 
-def test_get_reward(initial_moisture, irrigation, soil_factor, time_elapsed, optimal_min=30.0, optimal_max=40.0):
-    return reward
+def test_get_reward(s_moist_arr, optimal_min=30.0, optimal_max=40.0):
+    reward = 0
+    for moisture in s_moist_arr:
+        # Define the reward based on how close the new soil moisture is to the optimal range
+        if optimal_min <= moisture <= optimal_max:
+            reward += 10.0  # High reward for being within the optimal range
+        elif (optimal_min - 10.0 <= moisture < optimal_min) or (optimal_max < moisture <= optimal_max + 10.0):
+            # Penalize based on the distance from the optimal range
+            # reward += -abs(moisture - (optimal_min + optimal_max) / 2) / 10.0
+            reward += - min(abs(moisture - optimal_min), abs(moisture - optimal_max))
+        else:
+            reward += -10.0
+    return reward / (10 * len(s_moist_arr))
 
 def gen_smoist_array(initial_moisture, irrigation, soil_factor, time_elapsed):
-    moisture_after = initial_moisture + (irrigation * soil_factor / 100) - (time_elapsed * 2)
-    return moisture_after
+    moisture_after_array = []
+    for time in time_elapsed:
+        moisture_after_elapsed = initial_moisture + (irrigation * soil_factor) - (time * np.sqrt(2))
+        moisture_after_array = np.append(moisture_after_array, moisture_after_elapsed)
+    return moisture_after_array

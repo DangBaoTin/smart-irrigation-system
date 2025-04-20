@@ -108,7 +108,7 @@ class TrainingSimulator:
         self.my_agent.main_network.save("saved_models/agent_ep" + str(self.n_episodes) + "dat" + str(len(self.dataset)) + "_" + self.timenow + ".keras")
 
     def score(self):
-        episodes = self.metrics_df['episodes'].values
+        episodes = self.metrics_df['episode'].values
         total_rewards = self.metrics_df['total_reward'].values
         average_loss = self.metrics_df['average_loss'].values
 
