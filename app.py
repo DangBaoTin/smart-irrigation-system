@@ -2,7 +2,7 @@ from training_script import TrainingSimulator
 import pandas as pd
 
 
-dataset = pd.read_csv('data/cleaned/real_dat/dat_1_month.csv')
+dataset = pd.read_csv('data/cleaned/sandy_train_data.csv')
 # state_attributes = ["current_soil_moisture", "temperature", "rain"]
 state_attributes = ["current_soil_moisture", "temperature", "humidity", "rain", "salinity", "ph"]
 state_size = len(state_attributes)

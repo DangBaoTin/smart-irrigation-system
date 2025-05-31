@@ -19,6 +19,8 @@ sqlalchemy
 dotenv
 psycopg2-binary
 
+statsmodels
+
 
 # For juoyter notebook that do not support AVX-included CPU
 tensorflow==1.5.0
@@ -36,6 +38,8 @@ retry_requests
 sqlalchemy
 dotenv
 psycopg2-binary
+
+statsmodels
 
 # aquacrop
 # aquacropeto==0.1.1

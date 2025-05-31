@@ -59,9 +59,9 @@ class DataGenerator:
                 new_row = row.copy()
                 new_row['date'] = new_time
                 new_row['id'] = new_time.strftime('%Y%m%d%H%M%S')
-                new_row['salinity'] = round(random.uniform(19, 21), 1)
-                new_row['ph'] = round(random.uniform(5.5, 6.5), 1)
-                new_row['soil_moisture'] = round(random.uniform(25, 30), 1)
+                new_row['salinity'] = round(random.uniform(0.0, 2.0), 1)
+                new_row['ph'] = round(random.uniform(6.0, 7.5), 1)
+                new_row['soil_moisture'] = round(random.uniform(15, 40), 1)
                 
                 rows.append(new_row.to_dict())
 
@@ -124,12 +124,12 @@ if __name__ == "__main__":
     }
     data_gen = DataGenerator(meteo_api_args)
     
-    days = 240       # days
+    days = 120       # days
     interval = 1    # minutes
     print(data_gen.generate_state(days, interval))
     
     # Change the file name to your desired output path
-    data_gen.write_df('data/test_env_state.csv')
+    data_gen.write_df('data/new_loam_env_state.csv')
     
     # data_getter = DataGetter(csv_path='/mnt/d/_ACADEMIC/HCMUT/Term242/Project_Smart_Irrigation/code_/smart-irrigation-system/data/env_state.csv')
     # print(data_getter.get_data(combine_num=2))

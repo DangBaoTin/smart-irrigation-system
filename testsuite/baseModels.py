@@ -32,29 +32,15 @@ class BaseModels:
         }
     
     def fit(self):
-        X = self.df[features]
-        y = self.df[target_features]
+        X = self.df[self.features]
+        y = self.df[self.target_features]
         
-        # Standardize features
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
+        # # Standardize features
+        # scaler = StandardScaler()
+        # X_train_scaled = scaler.fit_transform(X_train)
+        # X_test_scaled = scaler.transform(X_test)
         
-        # Train and evaluate models
-        results = []
-        
-        for name, model in models.items():
-            model.fit(X_train_scaled, y_train)
-            y_pred = model.predict(X_test_scaled)
-            mae = mean_absolute_error(y_test, y_pred)
-            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-            r2 = r2_score(y_test, y_pred)
-            results.append({"Model": name, "MAE": mae, "RMSE": rmse, "R2 Score": r2})
+        for _, model in self.models.items():
+            model.fit(X, y)
 
-# Display results
-results_df = pd.DataFrame(results)
-results_df = results_df.sort_values(by="RMSE")
-print(results_df)
-
-# Optional: Save results
-results_df.to_csv("ml_model_comparison_results.csv", index=False)  # Optional output
+        return self.models
